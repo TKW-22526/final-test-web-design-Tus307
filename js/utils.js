@@ -19,11 +19,6 @@ export function formatElapsed(ms) {
   return `${pad(minutes)}:${pad(seconds)}.${pad(centiseconds)}`;
 }
 
-export function speedToLabel(rawValue) {
-  const multiplier = (rawValue / 4).toFixed(1);
-  return `${multiplier}×`;
-}
-
 export function downloadTextFile(filename, content) {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);

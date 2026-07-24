@@ -1,4 +1,4 @@
-import { qs, qsa, speedToLabel, copyToClipboard } from './utils.js';
+import { qs, qsa, copyToClipboard } from './utils.js';
 
 const TOAST_DURATION_MS = 3200;
 
@@ -7,7 +7,6 @@ let stylesInjected = false;
 
 const TAB_CONFIG = [
   { radio: 'tab-visualization', panel: 'panel-visualization' },
-  { radio: 'tab-timeline', panel: 'panel-timeline' },
   { radio: 'tab-logger', panel: 'panel-logger' },
   { radio: 'tab-result', panel: 'panel-result' },
   { radio: 'tab-explanation', panel: 'panel-explanation' },
@@ -102,16 +101,9 @@ export function getDomRefs() {
     inputSecondary: qs('#input-secondary'),
     inputSecondaryHint: qs('#input-secondary-hint'),
 
-    btnSimulate: qs('#btn-simulate'),
-    btnStep: qs('#btn-step'),
-    btnAutorun: qs('#btn-autorun'),
-    btnPause: qs('#btn-pause'),
     btnPrev: qs('#btn-prev'),
     btnNext: qs('#btn-next'),
     btnReset: qs('#btn-reset'),
-
-    speedSlider: qs('#speed-slider'),
-    speedValue: qs('#speed-value'),
 
     progressLabel: qs('#progress-label'),
     progressCount: qs('#progress-count'),
@@ -122,8 +114,6 @@ export function getDomRefs() {
 
     visualizationCanvas: qs('#visualization-canvas'),
     visualizationAlgoTag: qs('#visualization-algo-tag'),
-
-    timelineSteps: qs('#timeline-steps'),
 
     loggerOutput: qs('#logger-output'),
     btnDownloadLog: qs('#btn-download-log'),
@@ -216,27 +206,6 @@ export function setAlgorithmTag(refs, label) {
   refs.visualizationAlgoTag.textContent = label;
 }
 
-export function updateSpeedLabel(refs, rawValue) {
-  refs.speedValue.textContent = speedToLabel(rawValue);
-}
-
-export function bindSpeedSlider(refs, onChange) {
-  refs.speedSlider.addEventListener('input', (event) => {
-    const rawValue = Number(event.target.value);
-    updateSpeedLabel(refs, rawValue);
-    if (onChange) onChange(rawValue);
-  });
-}
-
-export function highlightTimelineStep(refs, activeStep) {
-  const steps = Array.from(refs.timelineSteps.children);
-  steps.forEach((stepEl) => {
-    const stepNumber = Number(stepEl.dataset.step);
-    stepEl.classList.toggle('is-active', stepNumber === activeStep);
-    stepEl.classList.toggle('is-complete', stepNumber < activeStep);
-  });
-}
-
 export function setExplanation(refs, text) {
   refs.explanationContent.textContent = text;
   replayAnimation(refs.explanationContent, 'ui-fade-in');
@@ -245,12 +214,6 @@ export function setExplanation(refs, text) {
 export function setResult(refs, text) {
   refs.resultOutput.textContent = text;
   replayAnimation(refs.resultOutput, 'ui-pulse');
-}
-
-export function setButtonsDisabled(buttons, disabled) {
-  buttons.forEach((button) => {
-    if (button) button.disabled = disabled;
-  });
 }
 
 export async function copyResultToClipboard(refs) {

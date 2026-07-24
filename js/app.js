@@ -5,17 +5,13 @@ import {
   toggleSecondaryInput,
   toggleDecryptMode,
   setAlgorithmTag,
-  updateSpeedLabel,
-  bindSpeedSlider,
-  highlightTimelineStep,
   setExplanation,
   setResult,
-  setButtonsDisabled,
   copyResultToClipboard,
   showToast,
 } from './ui.js';
 import { Logger } from './logger.js';
-import { AnimationController, PlaybackState } from './animation.js';
+import { AnimationController } from './animation.js';
 import { algorithmManager } from './algorithm.js';
 
 
@@ -31,11 +27,7 @@ let activeRun = null;
 const animation = new AnimationController({
   onStepChange: (step, total) => {
     updateProgress(refs, step, total);
-    highlightTimelineStep(refs, step);
     renderVisualization(step);
-  },
-  onStateChange: (state) => {
-    reflectPlaybackState(state);
   },
 });
 
@@ -46,12 +38,6 @@ const CANVAS_PLACEHOLDER =
 const RESULT_PLACEHOLDER =
   '<p class="result-placeholder">Kết quả sau khi mã hóa hoặc giải mã sẽ xuất hiện ở đây.</p>';
 
-
-function reflectPlaybackState(state) {
-  const isRunning = state === PlaybackState.RUNNING;
-  setButtonsDisabled([refs.btnPause], !isRunning);
-  setButtonsDisabled([refs.btnAutorun], isRunning);
-}
 
 function currentMode() {
   return refs.modeDecrypt.checked ? 'decrypt' : 'encrypt';
@@ -96,7 +82,9 @@ function resetRunState({ silent = false } = {}) {
   if (!silent) logger.log('Đã đặt lại trạng thái mô phỏng.');
 }
 
-
+/**
+ * @returns {Promise<boolean>}
+ */
 let runInFlight = false;
 
 async function ensureRunStarted() {
@@ -125,7 +113,7 @@ async function ensureRunStarted() {
   }
 
   if (meta.exactKeyLength) {
-    
+
     const letterCount = key.toUpperCase().replace(/[^A-Z]/g, '').length;
     if (letterCount !== meta.exactKeyLength) {
       alert('Khóa cần 4 kí tự cho ma trận 2x2');
@@ -139,7 +127,7 @@ async function ensureRunStarted() {
     const { steps, result } = await algorithmManager.run(id, { mode, input, key });
 
     if (myGeneration !== runGeneration) {
-      
+
       return false;
     }
 
@@ -152,7 +140,7 @@ async function ensureRunStarted() {
     setResult(refs, result);
     return true;
   } catch (error) {
-    
+
     if (myGeneration === runGeneration) {
       resetRunState({ silent: true });
       showToast(error.message, 'error');
@@ -221,7 +209,7 @@ function injectVisualizationStyles() {
       .bwv-bit-col{ transition:none; }
     }
 
-    
+    /* ---- MD5 / SHA-256 visualizer ---- */
     .md5-block-list{ display:flex; flex-direction:column; gap:8px; max-width:420px; }
     .md5-block-row{ display:flex; gap:10px; align-items:baseline; }
     .md5-block-label{ font-size:11px; color: var(--text-tertiary,#5e616e); text-transform:uppercase; letter-spacing:.06em; min-width:52px; }
@@ -241,7 +229,7 @@ function injectVisualizationStyles() {
 
     .md5-digest-hex{ font-family: var(--font-mono,monospace); font-size:16px; letter-spacing:.08em; color: var(--success,#6ee7b7); word-break:break-all; text-align:center; padding:10px 16px; border-radius: var(--radius-md,10px); background: var(--surface-strong,rgba(255,255,255,.06)); border:1px solid rgba(110,231,183,.35); }
 
-    
+    /* ---- Base64 visualizer ---- */
     .b64-bytes-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
     .b64-byte-chip{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 12px; border-radius: var(--radius-sm,6px); border:1px solid var(--border-glass,rgba(255,255,255,.09)); background: var(--surface,rgba(255,255,255,.035)); min-width:64px; }
     .b64-byte-label{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-tertiary,#5e616e); }
@@ -268,7 +256,7 @@ function injectVisualizationStyles() {
 
     .b64-final-output{ font-family: var(--font-mono,monospace); font-size:16px; letter-spacing:.06em; color: var(--success,#6ee7b7); word-break:break-all; text-align:center; padding:10px 16px; border-radius: var(--radius-md,10px); background: var(--surface-strong,rgba(255,255,255,.06)); border:1px solid rgba(110,231,183,.35); }
 
-    
+    /* ---- Hill Cipher visualizer ---- */
     .hill-matrix-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
     .hill-matrix-label{ font-size:11px; color: var(--text-tertiary,#5e616e); text-transform:uppercase; letter-spacing:.06em; }
     .hill-matrix{ display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
@@ -758,7 +746,7 @@ function renderVisualization(stepNumber) {
   if (!step) return;
 
   switch (step.type) {
-    
+    // Bitwise
     case 'notice':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { notice: true });
       break;
@@ -778,7 +766,7 @@ function renderVisualization(stepNumber) {
       refs.visualizationCanvas.innerHTML = renderBitwiseSummaryCard(step);
       break;
 
-    
+    // Hill Cipher
     case 'hill-input':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { title: 'Đầu vào' });
       break;
@@ -811,7 +799,7 @@ function renderVisualization(stepNumber) {
       });
       break;
 
-    
+    // MD5
     case 'md5-input':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { title: 'Đầu vào' });
       break;
@@ -836,7 +824,7 @@ function renderVisualization(stepNumber) {
       });
       break;
 
-    
+    // SHA-256
     case 'sha256-input':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { title: 'Đầu vào' });
       break;
@@ -861,7 +849,7 @@ function renderVisualization(stepNumber) {
       });
       break;
 
-    
+    // Base64 encode
     case 'b64-input':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { title: 'Đầu vào' });
       break;
@@ -889,7 +877,7 @@ function renderVisualization(stepNumber) {
       });
       break;
 
-    
+    // Base64 decode
     case 'b64d-input':
       refs.visualizationCanvas.innerHTML = renderNoticeCard(step, { title: 'Đầu vào Base64' });
       break;
@@ -944,29 +932,7 @@ function bindEvents() {
   refs.modeEncrypt.addEventListener('change', () => handleModeChange('mã hóa'));
   refs.modeDecrypt.addEventListener('change', () => handleModeChange('giải mã'));
 
-  bindSpeedSlider(refs, (rawValue) => animation.setSpeed(rawValue));
-
-  refs.btnSimulate.addEventListener('click', async () => {
-    if (!(await ensureRunStarted())) return;
-    logger.log('Chạy toàn bộ mô phỏng — nhảy tới bước cuối cùng.');
-    while (animation.currentStep < animation.totalSteps) {
-      animation.stepForward();
-    }
-  });
-
-  refs.btnStep.addEventListener('click', handleStepForward);
   refs.btnNext.addEventListener('click', handleStepForward);
-
-  refs.btnAutorun.addEventListener('click', async () => {
-    if (!(await ensureRunStarted())) return;
-    animation.startAutorun();
-    logger.log('Bắt đầu chạy tự động.');
-  });
-
-  refs.btnPause.addEventListener('click', () => {
-    animation.pauseAutorun();
-    logger.log('Đã tạm dừng mô phỏng.');
-  });
 
   refs.btnPrev.addEventListener('click', () => {
     animation.stepBackward();
@@ -998,10 +964,7 @@ function bindEvents() {
 
 function init() {
   initTabs(refs);
-  updateSpeedLabel(refs, Number(refs.speedSlider.value));
-  animation.setSpeed(Number(refs.speedSlider.value));
   applyAlgorithmSelection();
-  reflectPlaybackState(PlaybackState.IDLE);
   bindEvents();
   logger.log('Trình mô phỏng đã khởi tạo xong, sẵn sàng nhận lệnh.');
 }
